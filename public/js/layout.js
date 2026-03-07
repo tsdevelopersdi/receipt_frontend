@@ -102,6 +102,10 @@ function renderLayout(activePage) {
         <ul class="list-unstyled components flex-grow-1">
             ${sidebarItems}
         </ul>
+
+        <div class="sidebar-usage-container" id="api-usage-container">
+            <!-- Dynamic Content -->
+        </div>
     </nav>
     <!-- Overlay -->
     <div class="overlay"></div>
@@ -153,6 +157,56 @@ function renderLayout(activePage) {
 
     // 6. Initialize Interactive Logic (Toggle, etc.)
     initializeLayoutInteractions();
+
+    // 7. Initial Data Fetch for sidebar
+    updateAPIUsageBox();
+}
+
+async function updateAPIUsageBox() {
+    const container = document.getElementById('api-usage-container');
+    if (!container) return;
+
+    try {
+        console.log('Fetching API usage data from:', API_CONFIG.endpoints.apiUsage);
+        const response = await apiFetch(API_CONFIG.endpoints.apiUsage);
+        if (!response.ok) throw new Error('Failed to fetch API usage');
+
+        const data = await response.json();
+        console.log('API usage data received:', data);
+
+        if (data.hasGroup) {
+            const percentage = Math.min((data.usage / data.limit) * 100, 100);
+            container.innerHTML = `
+                <div class="sidebar-usage-box">
+                    <div class="usage-label">
+                        <span>API USAGE</span>
+                        <span class="usage-group-name">${data.groupName}</span>
+                    </div>
+                    <div class="usage-value">
+                        ${data.usage.toLocaleString()}<span class="usage-total">/ ${data.limit.toLocaleString()}</span>
+                    </div>
+                    <div class="usage-progress">
+                        <div class="usage-progress-bar" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="sidebar-usage-box">
+                    <div class="usage-no-group">
+                        <i class="fas fa-info-circle me-1"></i> ${data.message}
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error updating API usage box:', error);
+        container.innerHTML = `
+            <div class="sidebar-usage-box">
+                <div class="usage-no-group">Failed to load API usage</div>
+            </div>
+        `;
+    }
 }
 
 

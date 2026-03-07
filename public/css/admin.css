@@ -172,6 +172,83 @@ body {
     display: none !important;
 }
 
+/* API Usage Box Styling */
+.sidebar-usage-container {
+    padding: 20px 15px;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-usage-box {
+    background: rgba(var(--brand-color-rgb), 0.08);
+    border: 1px solid rgba(var(--brand-color-rgb), 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-usage-box:hover {
+    background: rgba(var(--brand-color-rgb), 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.usage-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.usage-group-name {
+    color: var(--brand-color);
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.usage-value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.usage-total {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-left: 3px;
+}
+
+.usage-progress {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.usage-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand-color) 0%, var(--brand-color-hover) 100%);
+    border-radius: 10px;
+    transition: width 1s ease-in-out;
+    box-shadow: 0 0 10px rgba(var(--brand-color-rgb), 0.4);
+}
+
+.usage-no-group {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    text-align: center;
+}
+
+#sidebar.collapsed .sidebar-usage-container {
+    display: none;
+}
+
 /* Content Styles (New Grey/White Aesthetic) */
 #content {
     width: calc(100% - var(--sidebar-width));

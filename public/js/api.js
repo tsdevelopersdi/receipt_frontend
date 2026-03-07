@@ -44,6 +44,8 @@ const API_CONFIG = {
     // invoiceDetailImage: `http://invoiceimage.solusidaya.id/invoice-detail-image`,
     dashboardInvoice: `${API_BASE_URL}/invoice-summary`,
     updateInvoiceStatus: `${API_BASE_URL}/update-invoice-status`,
+    apiUsage: `${API_BASE_URL}/api-usage`,
+    incrementAPIUsage: (userId) => `${API_BASE_URL}/apiusage/${userId}`,
     // n8nPriceFinder: `${API_BASE_URL}/n8n-price-finder`,
   },
   // Helper to get photo URL

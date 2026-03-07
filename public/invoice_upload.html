@@ -106,6 +106,46 @@
                 // Initial cleanup
                 resetPage();
                 fetchInvoiceList();
+                checkGroupRestriction();
+
+                async function checkGroupRestriction() {
+                    try {
+                        const res = await apiFetch(API_CONFIG.endpoints.apiUsage);
+                        if (!res.ok) return;
+
+                        const data = await res.json();
+                        if (!data.hasGroup || (data.usage >= data.limit)) {
+                            const btn = document.getElementById('btn-submit-upload');
+                            const fileInput = document.getElementById('invoiceImage');
+                            const form = document.getElementById('upload-form');
+
+                            // Disable inputs
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.innerHTML = '<i class="fas fa-lock me-2"></i>Upload Disabled';
+                                btn.classList.replace('btn-primary', 'btn-secondary');
+                            }
+                            if (fileInput) fileInput.disabled = true;
+
+                            // Add warning message
+                            const isLimitReached = data.hasGroup && data.usage >= data.limit;
+                            const alertType = isLimitReached ? 'danger' : 'warning';
+                            const alertTitle = isLimitReached ? 'Limit Reached' : 'Access Restricted';
+                            const alertMsg = isLimitReached
+                                ? `Your group API usage has reached the limit (${data.usage}/${data.limit}).`
+                                : (data.message || "You don't belong to any API group yet. Uploading is disabled.");
+
+                            form.insertAdjacentHTML('beforebegin', `
+                                <div class="alert alert-${alertType} border-0 shadow-sm mb-4">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>${alertTitle}:</strong> ${alertMsg}
+                                </div>
+                            `);
+                        }
+                    } catch (e) {
+                        console.error('Error checking group restriction:', e);
+                    }
+                }
 
                 function resetPage() {
                     document.getElementById('upload-form').reset();
@@ -261,6 +301,41 @@
                         if (res.ok) {
                             const data = await res.json();
                             console.log('AI Process success:', data);
+
+                            // 🔥 Increment API Usage
+                            try {
+                                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                if (user.id) {
+                                    console.log('Triggering API usage increment for userId:', user.id);
+                                    const usageRes = await apiFetch(API_CONFIG.endpoints.incrementAPIUsage(user.id), {
+                                        method: 'POST',
+                                        credentials: 'include'
+                                    });
+
+                                    if (!usageRes.ok) {
+                                        const errorData = await usageRes.json();
+                                        console.error('API usage increment failed:', errorData);
+                                        if (usageRes.status === 403) {
+                                            await showAlert('Limit Reached', errorData.message || 'API usage limit reached.', 'error');
+                                            window.location.reload(); // Refresh to lock UI
+                                            return;
+                                        }
+                                    } else {
+                                        console.log('API usage incremented successfully');
+                                    }
+                                } else {
+                                    console.warn('User ID not found in session, skipping usage increment.');
+                                }
+
+                                // Refresh Sidebar Box
+                                if (window.updateAPIUsageBox) {
+                                    console.log('Refreshing sidebar usage box...');
+                                    await updateAPIUsageBox();
+                                }
+                            } catch (usageErr) {
+                                console.error('Failed to increment API usage:', usageErr);
+                            }
+
                             await showAlert('Success', 'Invoice processed successfully.', 'success');
                             resetPage();
                             fetchInvoiceList(); // Refresh list
