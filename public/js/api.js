@@ -4,7 +4,8 @@
  */
 
 // const API_BASE_URL = 'http://10.10.28.121:3737';
-const API_BASE_URL = 'http://10.212.134.200:15753';
+const API_BASE_URL = 'https://estimaclaim.solusidaya.id/backend';
+// const API_BASE_URL = 'http://10.212.134.200:15753';
 // const API_BASE_URL = 'http://smartclaim.solusidaya.id:15753';
 // const API_BASE_URL = 'http://smartclaim.solusidaya.id/backend'; // ✅ goes through nginx
 // const API_BASE_URL = 'http://192.168.0.127:16753';
