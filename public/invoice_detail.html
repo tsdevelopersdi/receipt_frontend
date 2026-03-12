@@ -163,6 +163,7 @@
                                 <table class="table table-hover align-middle" id="editable-invoice-table">
                                     <thead class="table-light">
                                         <tr>
+                                            <th>Tanggal</th>
                                             <th>Description</th>
                                             <th class="text-center" style="width: 80px;">Qty</th>
                                             <th class="text-end" style="width: 140px;">Price (IDR)</th>
@@ -215,7 +216,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr class="table-light">
-                                            <td colspan="3" class="text-end fw-bold fs-5 py-3">Grand Total</td>
+                                            <td colspan="4" class="text-end fw-bold fs-5 py-3">Grand Total</td>
                                             <td class="text-end fw-bold fs-5 text-primary py-3"
                                                 id="detail-total-amount">Rp 32.500.000</td>
                                         </tr>
@@ -380,6 +381,7 @@
                             // Using merchant as description and jumlah as price
                             const isReadOnly = data.status === 'rejected' || data.status === 'closed';
                             row.innerHTML = `
+                                <td><div class="editable-cell tanggal-input" contenteditable="${!isReadOnly}">${item.tanggal ? new Date(item.tanggal).toISOString().split('T')[0] : ''}</div></td>
                                 <td><div class="editable-cell" contenteditable="${!isReadOnly}">${item.merchant || ''}</div></td>
                                 <td class="text-center"><div class="editable-cell qty-input" contenteditable="${!isReadOnly}">1</div></td>
                                 <td class="text-end"><div class="editable-cell price-input" contenteditable="${!isReadOnly}">${item.jumlah || 0}</div></td>
@@ -435,9 +437,10 @@
                 try {
                     const rows = document.querySelectorAll('#invoice-items-body tr');
                     const updatedTransactions = Array.from(rows).map(row => ({
-                        merchant: row.cells[0].innerText.trim(),
-                        jumlah: parseFloat(row.cells[2].innerText) || 0
-                        // Note: If you have more fields like category/date, they should be added here
+                        tanggal: row.cells[0].innerText.trim() || null,
+                        merchant: row.cells[1].innerText.trim(),
+                        jumlah: parseFloat(row.cells[3].innerText) || 0
+                        // Note: If you have more fields like category, they should be added here
                     }));
 
                     const response = await apiFetch(API_CONFIG.endpoints.saveInvoice, {
