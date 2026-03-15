@@ -198,8 +198,11 @@ const Auth = {
     },
 
     // 4. UI Restriction Helpers
-    restrictInvoiceDetails(ui, status = null) {
+    restrictInvoiceDetails(ui, invoice = {}) {
         const role = this.getUserRole();
+        const user = this.getUser();
+        const status = invoice.status || null;
+        const opsi = invoice.opsi || "technician"; // Default to technician if not set
 
         // 1. Hide all buttons by default
         if (ui.rejectBtn) ui.rejectBtn.classList.add('d-none');
@@ -211,36 +214,63 @@ const Auth = {
         // If rejected or closed, stay hidden
         if (status === 'rejected' || status === 'closed') return;
 
-        // 2. Access Control Logic (Role + Status)
-        if (role === 'admin' || role === 'super admin') {
+        // 2. Role-Based Logic for Approval Sequence
+        if (role === 'supervisor') {
+            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
+            // Supervisor only in Technician flow, first step
+            if (opsi === 'technician' && !invoice.acc_supervisor && user.department === invoice.dept) {
+                if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
+            }
+        } 
+        else if (role === 'finance') {
+            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
+            
+            if (opsi === 'technician') {
+                // Technician step 2: after supervisor
+                if (invoice.acc_supervisor && !invoice.acc_finance) {
+                    if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
+                }
+                // Technician step 4: Close after manager
+                if (status === 'completed') {
+                    if (ui.closeBtn) ui.closeBtn.classList.remove('d-none');
+                }
+            } else if (opsi === 'sales') {
+                // Sales step 3: after kasir
+                if (invoice.acc_kasir && !invoice.acc_finance) {
+                    if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
+                }
+                // Sales step 4: Close after finance approve (completed)
+                if (status === 'completed') {
+                    if (ui.closeBtn) ui.closeBtn.classList.remove('d-none');
+                }
+            }
+        }
+        else if (role === 'manager') {
             if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
 
-            // Show verify button ONLY if status is 'on_review' (not yet verified or approved)
-            if (ui.forwardBtn && status === 'on_review') {
-                ui.forwardBtn.classList.remove('d-none');
+            if (opsi === 'technician') {
+                // Technician step 3: after finance
+                if (invoice.acc_finance && !invoice.acc_direksi) {
+                    if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
+                }
+            } else if (opsi === 'sales') {
+                // Sales step 1: first step
+                if (!invoice.acc_direksi) {
+                    if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
+                }
             }
-
-            // Show update button ONLY if status is not approved or closed (already read-only for rejected/closed)
-            if (ui.updateBtn && status !== 'accepted' && status !== 'approved') {
-                ui.updateBtn.classList.remove('d-none');
-            }
-
-            // Only show close button if invoice is already approved (internal status 'accepted')
-            if (ui.closeBtn && (status === 'accepted' || status === 'approved')) {
-                ui.closeBtn.classList.remove('d-none');
-            }
-        } else if (role === 'manager') {
-            // Only show approve button if status is 'on_forward'
-            if (ui.approveBtn && status === 'on_forward') {
-                ui.approveBtn.classList.remove('d-none');
-            }
-
+        }
+        else if (role === 'kasir') {
             if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
-
-            // Only show close button if invoice is already accepted
-            if (ui.closeBtn && (status === 'accepted' || status === 'approved')) {
-                ui.closeBtn.classList.remove('d-none');
+            // Kasir only in Sales flow, step 2
+            if (opsi === 'sales' && invoice.acc_direksi && !invoice.acc_kasir) {
+                if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
             }
+        }
+        else if (role === 'admin' || role === 'super admin') {
+            // Admin only updates/fixes data, no approval power in new flow
+            if (ui.updateBtn) ui.updateBtn.classList.remove('d-none');
+            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
         }
     }
 };

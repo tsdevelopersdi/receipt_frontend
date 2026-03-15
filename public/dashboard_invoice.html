@@ -118,30 +118,30 @@
             </div>
 
             <div class="row g-4 mb-5">
-                <!-- 1. On Review -->
+                <!-- 1. Technician Pending -->
                 <div class="col-md-6 col-lg-4 col-xl">
                     <div class="card stat-card card-review h-100 p-3 shadow-sm"
-                        onclick="window.location.href='/list_invoice?status=review'">
+                        onclick="window.location.href='/list_invoice?status=technician_pending'">
                         <div class="card-body">
                             <div class="stat-icon icon-review">
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-tools"></i>
                             </div>
-                            <div class="stat-label">On Review</div>
-                            <div class="stat-value" id="stat-review">0</div>
+                            <div class="stat-label">Pending Technician</div>
+                            <div class="stat-value" id="stat-technician">0</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. On Forward -->
+                <!-- 2. Sales Pending -->
                 <div class="col-md-6 col-lg-4 col-xl">
                     <div class="card stat-card card-forward h-100 p-3 shadow-sm"
-                        onclick="window.location.href='/list_invoice?status=forward'">
+                        onclick="window.location.href='/list_invoice?status=sales_pending'">
                         <div class="card-body">
                             <div class="stat-icon icon-forward">
-                                <i class="fas fa-share-square"></i>
+                                <i class="fas fa-shopping-cart"></i>
                             </div>
-                            <div class="stat-label">Verified</div>
-                            <div class="stat-value" id="stat-forward">0</div>
+                            <div class="stat-label">Pending Sales</div>
+                            <div class="stat-value" id="stat-sales">0</div>
                         </div>
                     </div>
                 </div>
@@ -160,30 +160,16 @@
                     </div>
                 </div>
 
-                <!-- 4. Approved -->
+                <!-- 4. Completed -->
                 <div class="col-md-6 col-lg-4 col-xl">
                     <div class="card stat-card card-accepted h-100 p-3 shadow-sm"
-                        onclick="window.location.href='/list_invoice?status=accepted'">
+                        onclick="window.location.href='/list_invoice?status=completed'">
                         <div class="card-body">
                             <div class="stat-icon icon-accepted">
                                 <i class="fas fa-check-circle"></i>
                             </div>
-                            <div class="stat-label">Approved</div>
+                            <div class="stat-label">Completed</div>
                             <div class="stat-value" id="stat-accepted">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. Closed -->
-                <div class="col-md-6 col-lg-4 col-xl">
-                    <div class="card stat-card card-closed h-100 p-3 shadow-sm"
-                        onclick="window.location.href='/list_invoice?status=closed'">
-                        <div class="card-body">
-                            <div class="stat-icon icon-closed">
-                                <i class="fas fa-archive"></i>
-                            </div>
-                            <div class="stat-label">Closed</div>
-                            <div class="stat-value" id="stat-closed">0</div>
                         </div>
                     </div>
                 </div>
@@ -226,11 +212,10 @@
                 const data = await response.json();
 
                 // Update UI with animation for numbers
-                animateValue("stat-review", data.on_review || 0);
-                animateValue("stat-forward", data.on_forward || 0);
+                animateValue("stat-technician", data.technician_pending || 0);
+                animateValue("stat-sales", data.sales_pending || 0);
                 animateValue("stat-rejected", data.rejected || 0);
-                animateValue("stat-accepted", data.accepted || 0);
-                animateValue("stat-closed", data.closed || 0);
+                animateValue("stat-accepted", data.completed || 0);
                 animateValue("stat-total", data.total || 0);
 
                 document.getElementById('last-update').innerText = new Date().toLocaleTimeString('id-ID');

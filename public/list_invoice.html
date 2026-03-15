@@ -28,28 +28,28 @@
             </div>
 
             <div class="row g-4 mb-5" id="stat-cards-row">
-                <!-- 1. On Review -->
+                <!-- 1. Technician Pending -->
                 <div class="col-md-6 col-lg-4 col-xl">
-                    <div class="card stat-card card-review h-100 p-3 shadow-sm" data-status="on_review">
+                    <div class="card stat-card card-review h-100 p-3 shadow-sm" data-status="technician_pending">
                         <div class="card-body">
                             <div class="stat-icon icon-review">
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-tools"></i>
                             </div>
-                            <div class="stat-label">On Review</div>
-                            <div class="stat-value" id="stat-review">0</div>
+                            <div class="stat-label">Pending Technician</div>
+                            <div class="stat-value" id="stat-technician">0</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. On Forward -->
+                <!-- 2. Sales Pending -->
                 <div class="col-md-6 col-lg-4 col-xl">
-                    <div class="card stat-card card-forward h-100 p-3 shadow-sm" data-status="on_forward">
+                    <div class="card stat-card card-forward h-100 p-3 shadow-sm" data-status="sales_pending">
                         <div class="card-body">
                             <div class="stat-icon icon-forward">
-                                <i class="fas fa-share-square"></i>
+                                <i class="fas fa-shopping-cart"></i>
                             </div>
-                            <div class="stat-label">Verified</div>
-                            <div class="stat-value" id="stat-forward">0</div>
+                            <div class="stat-label">Pending Sales</div>
+                            <div class="stat-value" id="stat-sales">0</div>
                         </div>
                     </div>
                 </div>
@@ -67,31 +67,19 @@
                     </div>
                 </div>
 
-                <!-- 4. Approved -->
+                <!-- 4. Completed/Approved -->
                 <div class="col-md-6 col-lg-4 col-xl">
-                    <div class="card stat-card card-accepted h-100 p-3 shadow-sm" data-status="accepted">
+                    <div class="card stat-card card-accepted h-100 p-3 shadow-sm" data-status="completed">
                         <div class="card-body">
                             <div class="stat-icon icon-accepted">
                                 <i class="fas fa-check-circle"></i>
                             </div>
-                            <div class="stat-label">Approved</div>
+                            <div class="stat-label">Completed</div>
                             <div class="stat-value" id="stat-accepted">0</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 5. Closed -->
-                <div class="col-md-6 col-lg-4 col-xl">
-                    <div class="card stat-card card-closed h-100 p-3 shadow-sm" data-status="closed">
-                        <div class="card-body">
-                            <div class="stat-icon icon-closed">
-                                <i class="fas fa-archive"></i>
-                            </div>
-                            <div class="stat-label">Closed</div>
-                            <div class="stat-value" id="stat-closed">0</div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- 6. Total Invoices -->
                 <div class="col-md-6 col-lg-4 col-xl">
@@ -122,7 +110,9 @@
                                 <tr>
                                     <th style="width: 50px;">#</th>
                                     <th>Upload Date</th>
-                                    <th>Invoice Name</th>
+                                    <th>Opsi</th>
+                                    <th>Dept</th>
+                                    <th>Keterangan</th>
                                     <th>User</th>
                                     <th>Amount (IDR)</th>
                                     <th>Status</th>
@@ -252,8 +242,15 @@
                         }
                     },
                     {
-                        data: 'nama_invoice',
-                        className: 'fw-bold',
+                        data: 'opsi',
+                        render: (data) => data || '-'
+                    },
+                    {
+                        data: 'dept',
+                        render: (data) => data || '-'
+                    },
+                    {
+                        data: 'keterangan',
                         render: (data) => data || '-'
                     },
                     {
@@ -279,13 +276,15 @@
                             const badges = {
                                 on_review: 'warning',
                                 accepted: 'success',
+                                completed: 'success',
                                 rejected: 'danger',
                                 on_forward: 'info',
                                 closed: 'info'
                             };
                             const statusLabels = {
                                 on_forward: 'Verified',
-                                accepted: 'Approved'
+                                accepted: 'Approved',
+                                completed: 'Completed'
                             };
                             const color = badges[data] || 'secondary';
                             const label = statusLabels[data] || data || '-';
@@ -347,11 +346,10 @@
                 const data = await response.json();
 
                 // ✅ FIXED: Directly set values, no animation
-                document.getElementById('stat-review').innerText = data.on_review || 0;
-                document.getElementById('stat-forward').innerText = data.on_forward || 0;
+                document.getElementById('stat-technician').innerText = data.technician_pending || 0;
+                document.getElementById('stat-sales').innerText = data.sales_pending || 0;
                 document.getElementById('stat-rejected').innerText = data.rejected || 0;
-                document.getElementById('stat-accepted').innerText = data.accepted || 0;
-                document.getElementById('stat-closed').innerText = data.closed || 0;
+                document.getElementById('stat-accepted').innerText = data.completed || 0;
                 document.getElementById('stat-total').innerText = data.total || 0;
 
             } catch (error) {

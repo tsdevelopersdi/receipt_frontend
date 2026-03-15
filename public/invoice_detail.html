@@ -156,6 +156,13 @@
                                 </div>
                             </div>
 
+                            <div id="approval-progress-section" class="mb-4">
+                                <h6 class="fw-bold mb-3">Approval Progress</h6>
+                                <div class="row g-2" id="approval-badges-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
                             <hr>
 
                             <h6 class="fw-bold mb-3">Itemized Breakdown</h6>
@@ -335,9 +342,13 @@
                     const statusEl = document.getElementById('detail-status');
                     const statusLabels = {
                         on_forward: 'Verified',
-                        accepted: 'Approved'
+                        accepted: 'Approved',
+                        completed: 'Completed'
                     };
                     statusEl.innerText = statusLabels[data.status] || data.status || 'Unknown';
+                    
+                    // Render Approval Progress
+                    renderApprovalProgress(data);
                     const statusColors = {
                         accepted: 'bg-success',
                         approved: 'bg-success',
@@ -355,7 +366,7 @@
                         updateBtn: document.getElementById('update-btn'),
                         approveBtn: document.getElementById('approve-btn'),
                         closeBtn: document.getElementById('close-btn')
-                    }, data.status);
+                    }, data);
 
                     // Special case: hide everything if closed or rejected
                     if (data.status === 'closed' || data.status === 'rejected') {
@@ -479,7 +490,7 @@
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
-                                    body: JSON.stringify({ id: invoiceId, status: 'rejected' })
+                                    body: JSON.stringify({ id: invoiceId, action: 'reject' })
                                 });
 
                                 if (!response.ok) throw new Error('Failed to reject invoice');
@@ -528,7 +539,7 @@
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
-                                    body: JSON.stringify({ id: invoiceId, status: 'accepted' })
+                                    body: JSON.stringify({ id: invoiceId, action: 'approve' })
                                 });
 
                                 if (!response.ok) throw new Error('Failed to approve invoice');
@@ -555,7 +566,7 @@
                                     headers: {
                                         'Content-Type': 'application/json'
                                     },
-                                    body: JSON.stringify({ id: invoiceId, status: 'closed' })
+                                    body: JSON.stringify({ id: invoiceId, action: 'close' })
                                 });
 
                                 if (!response.ok) throw new Error('Failed to close invoice');
@@ -569,6 +580,42 @@
                         }
                     });
             });
+
+            function renderApprovalProgress(data) {
+                const container = document.getElementById('approval-badges-container');
+                container.innerHTML = '';
+                
+                const steps = [];
+                if (data.opsi === 'technician') {
+                    steps.push({ role: 'Supervisor', name: data.acc_supervisor, icon: 'fa-user-tie' });
+                    steps.push({ role: 'Finance', name: data.acc_finance, icon: 'fa-coins' });
+                    steps.push({ role: 'Manager', name: data.acc_direksi, icon: 'fa-user-shield' });
+                } else {
+                    steps.push({ role: 'Manager', name: data.acc_direksi, icon: 'fa-user-shield' });
+                    steps.push({ role: 'Kasir', name: data.acc_kasir, icon: 'fa-cash-register' });
+                    steps.push({ role: 'Finance', name: data.acc_finance, icon: 'fa-coins' });
+                }
+
+                steps.forEach(step => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-4';
+                    const isApproved = !!step.name;
+                    col.innerHTML = `
+                        <div class="p-2 border rounded ${isApproved ? 'bg-light-success border-success' : 'bg-light border-secondary opacity-50'}">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2 text-${isApproved ? 'success' : 'secondary'}">
+                                    <i class="fas ${step.icon}"></i>
+                                </div>
+                                <div>
+                                    <div class="small fw-bold">${step.role}</div>
+                                    <div class="small">${step.name || 'Pending...'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(col);
+                });
+            }
 
             // Initial Load
             if (invoiceId) {

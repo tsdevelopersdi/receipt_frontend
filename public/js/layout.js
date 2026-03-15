@@ -132,7 +132,10 @@ function renderLayout(activePage) {
                     <a class="nav-link user-dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="user-info-wrapper d-none d-sm-block text-end me-2">
                             <div class="user-email text-dark fw-bold" style="font-size: 0.8rem; line-height: 1.2;">${user.email || 'Admin Use'}</div>
-                            <span class="badge bg-primary-light text-primary" style="font-size: 0.6rem; padding: 2px 6px; border-radius: 4px;">${user.role || ''}</span>
+                            <div class="d-flex justify-content-end gap-1 mt-1">
+                                <span class="badge bg-primary-light text-primary" style="font-size: 0.6rem; padding: 2px 6px; border-radius: 4px;">${user.role || ''}</span>
+                                ${user.department ? `<span class="badge bg-info-light text-info" style="font-size: 0.6rem; padding: 2px 6px; border-radius: 4px;">${user.department}</span>` : ''}
+                            </div>
                         </div>
                         <div class="avatar-circle">
                             <i class="fas fa-user-circle fa-2x text-primary shadow-sm"></i>
@@ -141,7 +144,10 @@ function renderLayout(activePage) {
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" aria-labelledby="navbarDropdown">
                         <li class="px-3 py-2 d-sm-none border-bottom">
                             <div class="fw-bold text-dark mb-0" style="font-size: 0.85rem;">${user.email || 'Admin'}</div>
-                            <span class="badge bg-primary-light text-primary" style="font-size: 0.65rem;">${user.role || ''}</span>
+                            <div class="d-flex gap-1 mt-1">
+                                <span class="badge bg-primary-light text-primary" style="font-size: 0.65rem;">${user.role || ''}</span>
+                                ${user.department ? `<span class="badge bg-info-light text-info" style="font-size: 0.65rem;">${user.department}</span>` : ''}
+                            </div>
                         </li>
                         <li><a class="dropdown-item py-2" href="#" id="logoutLink"><i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout</a></li>
                     </ul>
