@@ -165,7 +165,12 @@
 
                             <hr>
 
-                            <h6 class="fw-bold mb-3">Itemized Breakdown</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">Itemized Breakdown</h6>
+                                <button id="add-item-btn" class="btn btn-sm btn-outline-primary d-none" onclick="addItemRow()">
+                                    <i class="fas fa-plus me-1"></i> Add Item
+                                </button>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle" id="editable-invoice-table">
                                     <thead class="table-light">
@@ -175,6 +180,7 @@
                                             <th class="text-center" style="width: 80px;">Qty</th>
                                             <th class="text-end" style="width: 140px;">Price (IDR)</th>
                                             <th class="text-end" style="width: 140px;">Total</th>
+                                            <th class="text-center action-col d-none" style="width: 50px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="invoice-items-body">
@@ -241,6 +247,9 @@
                                 </button>
                                 <button class="btn btn-primary px-4 d-none" id="update-btn">
                                     <i class="fas fa-save me-2"></i> Update
+                                </button>
+                                <button class="btn btn-outline-info px-4 d-none" id="print-voucher-btn">
+                                    <i class="fas fa-print me-2"></i> Print Voucher
                                 </button>
 
                                 <button class="btn btn-success px-4 d-none" id="approve-btn">
@@ -318,6 +327,28 @@
                 totalAmountEl.innerText = formatCurrency(grandTotal);
             }
 
+            // --- Admin Edit Functions ---
+            window.addItemRow = function() {
+                const tr = document.createElement('tr');
+                const today = new Date().toISOString().split('T')[0];
+                tr.innerHTML = `
+                    <td><div class="editable-cell tanggal-input" contenteditable="true">${today}</div></td>
+                    <td><div class="editable-cell" contenteditable="true">New Item...</div></td>
+                    <td class="text-center"><div class="editable-cell qty-input" contenteditable="true">1</div></td>
+                    <td class="text-end"><div class="editable-cell price-input" contenteditable="true">0</div></td>
+                    <td class="text-end fw-bold row-total">Rp 0</td>
+                    <td class="text-center action-col"><button class="btn btn-sm text-danger" onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></td>
+                `;
+                document.getElementById('invoice-items-body').appendChild(tr);
+                calculateTotals();
+            };
+
+            window.deleteRow = function(btn) {
+                const row = btn.closest('tr');
+                row.remove();
+                calculateTotals();
+            };
+
             // Fetch Invoice Details
             async function fetchInvoiceData(id) {
                 try {
@@ -330,7 +361,7 @@
                     const data = await response.json();
 
                     // Populate basic info
-                    document.getElementById('detail-invoice-name').innerText = data.nama_invoice || `INV-${id}`;
+                    document.getElementById('detail-invoice-name').innerText = data.keterangan || data.nama_invoice || `INV-${id}`;
                     document.getElementById('detail-date').innerText = data.tanggal_upload ? new Date(data.tanggal_upload).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
 
                     // Populate User details
@@ -365,8 +396,19 @@
                         forwardBtn: document.getElementById('forward-btn'),
                         updateBtn: document.getElementById('update-btn'),
                         approveBtn: document.getElementById('approve-btn'),
-                        closeBtn: document.getElementById('close-btn')
+                        closeBtn: document.getElementById('close-btn'),
+                        printVoucherBtn: document.getElementById('print-voucher-btn')
                     }, data);
+
+                    // --- Admin-only UI Enhancements ---
+                    const userRole = Auth.getUserRole();
+                    const isAdmin = userRole === 'admin' || userRole === 'super admin';
+                    const isClosedOrRejected = status === 'closed' || status === 'rejected';
+
+                    if (isAdmin && !isClosedOrRejected) {
+                        document.getElementById('add-item-btn').classList.remove('d-none');
+                        document.querySelectorAll('.action-col').forEach(el => el.classList.remove('d-none'));
+                    }
 
                     // Special case: hide everything if closed or rejected
                     if (data.status === 'closed' || data.status === 'rejected') {
@@ -387,21 +429,25 @@
                     // Populate transactions (items) table
                     if (data.transactions && Array.isArray(data.transactions)) {
                         itemsBody.innerHTML = '';
+                        const userRole = Auth.getUserRole();
+                        const isAdmin = userRole === 'admin' || userRole === 'super admin';
+                        const isReadOnly = !isAdmin || data.status === 'rejected' || data.status === 'closed';
+
                         data.transactions.forEach(item => {
                             const row = document.createElement('tr');
-                            // Using merchant as description and jumlah as price
-                            const isReadOnly = data.status === 'rejected' || data.status === 'closed';
                             row.innerHTML = `
-                                <td><div class="editable-cell tanggal-input" contenteditable="${!isReadOnly}">${item.tanggal ? new Date(item.tanggal).toISOString().split('T')[0] : ''}</div></td>
-                                <td><div class="editable-cell" contenteditable="${!isReadOnly}">${item.merchant || ''}</div></td>
-                                <td class="text-center"><div class="editable-cell qty-input" contenteditable="${!isReadOnly}">1</div></td>
-                                <td class="text-end"><div class="editable-cell price-input" contenteditable="${!isReadOnly}">${item.jumlah || 0}</div></td>
+                                <td><div class="${isReadOnly ? '' : 'editable-cell'} tanggal-input" contenteditable="${!isReadOnly}">${item.tanggal ? new Date(item.tanggal).toISOString().split('T')[0] : ''}</div></td>
+                                <td><div class="${isReadOnly ? '' : 'editable-cell'}" contenteditable="${!isReadOnly}">${item.merchant || ''}</div></td>
+                                <td class="text-center"><div class="${isReadOnly ? '' : 'editable-cell'} qty-input" contenteditable="${!isReadOnly}">1</div></td>
+                                <td class="text-end"><div class="${isReadOnly ? '' : 'editable-cell'} price-input" contenteditable="${!isReadOnly}">${item.jumlah || 0}</div></td>
                                 <td class="text-end fw-bold row-total">${formatCurrency(item.jumlah)}</td>
+                                ${!isReadOnly ? '<td class="text-center action-col"><button class="btn btn-sm text-danger" onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></td>' : '<td class="action-col d-none"></td>'}
                             `;
                             itemsBody.appendChild(row);
                         });
                         calculateTotals();
                     }
+
                 } catch (error) {
                     console.error('Error fetching data:', error);
                     showToast('Failed to load invoice details', 'error');
@@ -579,6 +625,11 @@
                             }
                         }
                     });
+            });
+
+            // Handle Print Voucher Button
+            document.getElementById('print-voucher-btn').addEventListener('click', function () {
+                window.open(`/print_voucher.html?id=${invoiceId}`, '_blank');
             });
 
             function renderApprovalProgress(data) {

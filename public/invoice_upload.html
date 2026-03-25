@@ -44,9 +44,9 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="opsi" class="form-label">Opsi</label>
+                                        <label for="opsi" class="form-label">Pilih Flow</label>
                                         <select class="form-select" id="opsi" required>
-                                            <option value="" selected disabled>Select Opsi</option>
+                                            <option value="" selected disabled>Select Flow</option>
                                             <option value="sales">Sales</option>
                                             <option value="technician">Technician</option>
                                         </select>
@@ -56,11 +56,11 @@
                                         <input type="text" class="form-control" id="keterangan"
                                             placeholder="Masukkan keterangan..." required>
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-6 mb-3 d-none">
                                         <label for="dept" class="form-label">Department</label>
                                         <select class="form-select" id="dept" required>
-                                            <option value="" selected disabled>Select Department</option>
-                                            <option value="engineering">Engineering</option>
+                                            <option value="" disabled>Select Department</option>
+                                            <option value="engineering" selected>Engineering</option>
                                             <option value="suply_chain">Supply Chain</option>
                                             <option value="general_affairs">General Affairs</option>
                                             <option value="human_resources">Human Resources</option>
@@ -262,15 +262,15 @@
                         document.querySelectorAll('.invoice-mini-pic').forEach(img => {
                             // Only fetch if not already loaded (check for blob URL)
                             if (img.src.startsWith('blob:')) return;
-                            
+
                             const filename = img.getAttribute('data-filename');
                             if (!filename) return;
 
                             apiFetch(`${API_CONFIG.endpoints.invoiceDetailImage}/${filename}`, { credentials: 'include' })
                                 .then(res => res.blob())
-                                .then(blob => { 
+                                .then(blob => {
                                     const url = URL.createObjectURL(blob);
-                                    img.src = url; 
+                                    img.src = url;
                                 })
                                 .catch(e => console.error('Error loading mini image', e));
                         });

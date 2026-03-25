@@ -210,8 +210,15 @@ const Auth = {
         if (ui.updateBtn) ui.updateBtn.classList.add('d-none');
         if (ui.approveBtn) ui.approveBtn.classList.add('d-none');
         if (ui.closeBtn) ui.closeBtn.classList.add('d-none');
+        if (ui.printVoucherBtn) ui.printVoucherBtn.classList.add('d-none');
 
-        // If rejected or closed, stay hidden
+        // Show print button ONLY for Finance role IF status is closed or completed
+        if ((status === 'closed' || status === 'completed') && role === 'finance') {
+            if (ui.printVoucherBtn) ui.printVoucherBtn.classList.remove('d-none');
+        }
+
+        // If rejected or closed, stay hidden for other action buttons (Approve, Reject, Update, Forward)
+        // We do NOT include 'completed' here because Finance still needs to see the 'Close Invoice' button
         if (status === 'rejected' || status === 'closed') return;
 
         // 2. Role-Based Logic for Approval Sequence
