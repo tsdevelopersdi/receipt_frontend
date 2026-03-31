@@ -299,6 +299,7 @@
             // Get ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             const invoiceId = urlParams.get('id');
+            let currentInvoiceStatus = null; // Track invoice status for locking
 
             // Format number to IDR
             const formatCurrency = (amount) => {
@@ -359,6 +360,7 @@
                     if (!response.ok) throw new Error('Failed to fetch invoice details');
 
                     const data = await response.json();
+                    currentInvoiceStatus = data.status; // Store status for locking checks
 
                     // Populate basic info
                     document.getElementById('detail-invoice-name').innerText = data.keterangan || data.nama_invoice || `INV-${id}`;
@@ -403,16 +405,16 @@
                     // --- Admin-only UI Enhancements ---
                     const userRole = Auth.getUserRole();
                     const isAdmin = userRole === 'admin' || userRole === 'super admin';
-                    const isClosedOrRejected = status === 'closed' || status === 'rejected';
+                    const isLockedStatus = data.status === 'closed' || data.status === 'rejected' || data.status === 'completed';
 
-                    if (isAdmin && !isClosedOrRejected) {
+                    if (isAdmin && !isLockedStatus) {
                         document.getElementById('add-item-btn').classList.remove('d-none');
                         document.querySelectorAll('.action-col').forEach(el => el.classList.remove('d-none'));
                     }
 
-                    // Special case: hide everything if closed or rejected
-                    if (data.status === 'closed' || data.status === 'rejected') {
-                        const buttons = ['reject-btn', 'forward-btn', 'update-btn', 'approve-btn', 'close-btn'];
+                    // Special case: hide everything if closed, rejected, or completed
+                    if (isLockedStatus) {
+                        const buttons = ['reject-btn', 'forward-btn', 'update-btn', 'approve-btn', 'close-btn', 'add-item-btn'];
                         buttons.forEach(id => document.getElementById(id)?.classList.add('d-none'));
 
                         // Disable table editing
@@ -431,7 +433,8 @@
                         itemsBody.innerHTML = '';
                         const userRole = Auth.getUserRole();
                         const isAdmin = userRole === 'admin' || userRole === 'super admin';
-                        const isReadOnly = !isAdmin || data.status === 'rejected' || data.status === 'closed';
+                        // Read-only if invoice is completed, rejected, or closed (for ALL roles)
+                        const isReadOnly = data.status === 'rejected' || data.status === 'closed' || data.status === 'completed';
 
                         data.transactions.forEach(item => {
                             const row = document.createElement('tr');
@@ -487,6 +490,13 @@
 
             // Handle Update Button (Save)
             updateBtn.addEventListener('click', async function () {
+                // Prevent updates if invoice is locked
+                const lockedStatuses = ['completed', 'closed', 'rejected'];
+                if (lockedStatuses.includes(currentInvoiceStatus)) {
+                    showToast('Cannot update a completed, closed, or rejected invoice', 'error');
+                    return;
+                }
+
                 updateBtn.disabled = true;
                 const originalHtml = updateBtn.innerHTML;
                 updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Updating...';

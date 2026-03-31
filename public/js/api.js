@@ -4,8 +4,11 @@
  */
 
 // const API_BASE_URL = 'http://10.10.28.121:3737';
-const API_BASE_URL = 'https://estimaclaim.solusidaya.id/backend';
+// const API_BASE_URL = 'https://estimaclaim.solusidaya.id/backend';
 // const API_BASE_URL = 'http://10.212.134.200:15753';
+const API_BASE_URL = 'http://10.28.24.173:15753'; // => prosperity
+// const API_BASE_URL = 'http://10.10.28.111:15753'; //=> aktiva
+// const API_BASE_URL = 'http://10.212.134.200:15753'; //=> VPN
 // const API_BASE_URL = 'http://smartclaim.solusidaya.id:15753';
 // const API_BASE_URL = 'http://smartclaim.solusidaya.id/backend'; // ✅ goes through nginx
 // const API_BASE_URL = 'http://192.168.0.127:16753';
@@ -44,6 +47,7 @@ const API_CONFIG = {
     // invoiceDetailImage: `http://smartclaim.solusidaya.id/invoice-detail-image`,
     // invoiceDetailImage: `http://invoiceimage.solusidaya.id/invoice-detail-image`,
     dashboardInvoice: `${API_BASE_URL}/invoice-summary`,
+    invoiceSummaryAdvanced: `${API_BASE_URL}/invoice-summary-advanced`,
     updateInvoiceStatus: `${API_BASE_URL}/update-invoice-status`,
     apiUsage: `${API_BASE_URL}/api-usage`,
     incrementAPIUsage: (userId) => `${API_BASE_URL}/apiusage/${userId}`,

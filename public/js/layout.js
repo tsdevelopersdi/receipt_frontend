@@ -64,6 +64,11 @@ function renderLayout(activePage) {
                              <i class="fas fa-upload me-2" style="font-size: 0.8rem;"></i> <span>Upload</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="/summary" class="${activePage === 'summary' ? 'active' : ''}">
+                             <i class="fas fa-chart-pie me-2" style="font-size: 0.8rem;"></i> <span>Summary</span>
+                        </a>
+                    </li>
                 </ul>
             </li>
         `;
@@ -84,6 +89,11 @@ function renderLayout(activePage) {
                     <li>
                         <a href="/list_invoice" class="${activePage === 'list_invoice' ? 'active' : ''}">
                              <i class="fas fa-list me-2" style="font-size: 0.8rem;"></i> <span>List</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/summary" class="${activePage === 'summary' ? 'active' : ''}">
+                             <i class="fas fa-chart-pie me-2" style="font-size: 0.8rem;"></i> <span>Summary</span>
                         </a>
                     </li>
                 </ul>

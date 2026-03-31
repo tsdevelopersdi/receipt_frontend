@@ -71,6 +71,10 @@ app.get("/invoice_detail", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "invoice_detail.html"));
 });
 
+app.get("/summary", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "summary.html"));
+});
+
 // app.get("/test_auth", (req, res) => {
 //   res.sendFile(path.join(__dirname, "public", "test_auth.html"));
 // });

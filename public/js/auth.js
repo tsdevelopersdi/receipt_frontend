@@ -221,16 +221,21 @@ const Auth = {
         // We do NOT include 'completed' here because Finance still needs to see the 'Close Invoice' button
         if (status === 'rejected' || status === 'closed') return;
 
+        // Hide reject button if invoice is completed (no rejection after completion)
+        if (status === 'completed') {
+            if (ui.rejectBtn) ui.rejectBtn.classList.add('d-none');
+        }
+
         // 2. Role-Based Logic for Approval Sequence
         if (role === 'supervisor') {
-            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
+            if (ui.rejectBtn && status !== 'completed') ui.rejectBtn.classList.remove('d-none');
             // Supervisor only in Technician flow, first step
             if (opsi === 'technician' && !invoice.acc_supervisor && user.department === invoice.dept) {
                 if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
             }
         } 
         else if (role === 'finance') {
-            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
+            if (ui.rejectBtn && status !== 'completed') ui.rejectBtn.classList.remove('d-none');
             
             if (opsi === 'technician') {
                 // Technician step 2: after supervisor
@@ -253,7 +258,7 @@ const Auth = {
             }
         }
         else if (role === 'manager') {
-            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
+            if (ui.rejectBtn && status !== 'completed') ui.rejectBtn.classList.remove('d-none');
 
             if (opsi === 'technician') {
                 // Technician step 3: after finance
@@ -268,7 +273,7 @@ const Auth = {
             }
         }
         else if (role === 'kasir') {
-            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
+            if (ui.rejectBtn && status !== 'completed') ui.rejectBtn.classList.remove('d-none');
             // Kasir only in Sales flow, step 2
             if (opsi === 'sales' && invoice.acc_direksi && !invoice.acc_kasir) {
                 if (ui.approveBtn) ui.approveBtn.classList.remove('d-none');
@@ -277,7 +282,7 @@ const Auth = {
         else if (role === 'admin' || role === 'super admin') {
             // Admin only updates/fixes data, no approval power in new flow
             if (ui.updateBtn) ui.updateBtn.classList.remove('d-none');
-            if (ui.rejectBtn) ui.rejectBtn.classList.remove('d-none');
+            if (ui.rejectBtn && status !== 'completed') ui.rejectBtn.classList.remove('d-none');
         }
     }
 };
