@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Silent Refresh Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f7f6; padding-top: 50px; }
+        .test-card { max-width: 600px; margin: auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background: white; }
+        .log-area { height: 200px; overflow-y: auto; background: #2d3436; color: #dfe6e9; padding: 10px; font-family: monospace; border-radius: 8px; margin-top: 20px; }
+        .status-badge { font-size: 0.9rem; padding: 5px 10px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="test-card">
+        <h2 class="mb-4">Auth Silent Refresh Test</h2>
+        <p class="text-muted">Use this page to verify if <code>apiFetch</code> correctly handles expired access tokens.</p>
+        
+        <div class="mb-3">
+            <label class="form-label">API Endpoint to Test:</label>
+            <input type="text" id="endpointInput" class="form-control" value="/projects">
+            <small class="text-muted">Pick a protected route that requires VerifyToken.</small>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button id="testBtn" class="btn btn-primary">Run Authenticated Request</button>
+        </div>
+
+        <div class="mt-4">
+            <h5>Instructions:</h5>
+            <ol>
+                <li>Make sure you are <a href="/login">logged in</a>.</li>
+                <li>Open DevTools (F12) -> <strong>Application</strong> tab -> <strong>Cookies</strong>.</li>
+                <li>To simulate an expired token: <strong>Delete ONLY <code>accessToken</code></strong> (leave <code>refreshToken</code>).</li>
+                <li>Click the blue button above.</li>
+                <li><strong>Observation:</strong> Check the <strong>Network</strong> tab. You should see a 401, followed by a <code>/token</code> call (200), and then the original request retried (200).</li>
+            </ol>
+        </div>
+
+        <div class="log-area" id="logOutput">
+            [System Log Initialized]
+        </div>
+    </div>
+</div>
+
+<!-- Dependencies -->
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/apiFetch.js"></script>
+
+<script>
+    const logOutput = document.getElementById('logOutput');
+    const testBtn = document.getElementById('testBtn');
+    const endpointInput = document.getElementById('endpointInput');
+
+    function log(message, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const color = type === 'error' ? '#ff7675' : (type === 'success' ? '#55efc4' : '#dfe6e9');
+        logOutput.innerHTML += `<div style="color: ${color}">[${time}] ${message}</div>`;
+        logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    testBtn.addEventListener('click', async () => {
+        const endpoint = endpointInput.value;
+        const url = `${API_CONFIG.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+        
+        log(`Calling: ${url}...`);
+        
+        try {
+            const response = await apiFetch(url);
+            const data = await response.json();
+            
+            if (response.ok) {
+                log(`Success! Status: ${response.status}`, 'success');
+                console.log('Response Data:', data);
+            } else {
+                log(`Failed! Status: ${response.status}`, 'error');
+            }
+        } catch (err) {
+            log(`Error: ${err.message}`, 'error');
+            console.error(err);
+        }
+    });
+
+    // Patch console.warn/info to show in our log area too
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+        log(`WARN: ${args[0]}`, 'info');
+        originalWarn.apply(console, args);
+    };
+    const originalInfo = console.info;
+    console.info = (...args) => {
+        log(`INFO: ${args[0]}`, 'success');
+        originalInfo.apply(console, args);
+    };
+</script>
+
+</body>
+</html>
