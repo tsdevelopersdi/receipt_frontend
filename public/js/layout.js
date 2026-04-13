@@ -75,6 +75,12 @@ function renderLayout(activePage) {
     } else {
         // Admin/Manager/Others see everything
         sidebarItems = `
+            <div class="sidebar-section-label">Master Data</div>
+            <li>
+                <a href="/projects" class="${activePage === 'projects' ? 'active' : ''}">
+                    <i class="fas fa-diagram-project"></i> <span>Projects</span>
+                </a>
+            </li>
             <div class="sidebar-section-label">Finance</div>
             <li>
                 <a href="#invoiceSubmenu" data-bs-toggle="collapse" aria-expanded="${['invoice_upload', 'list_invoice', 'invoice_detail'].includes(activePage) ? 'true' : 'false'}" class="dropdown-toggle ${['invoice_upload', 'list_invoice', 'invoice_detail'].includes(activePage) ? '' : 'collapsed'}">
@@ -84,11 +90,6 @@ function renderLayout(activePage) {
                     <li>
                         <a href="/invoice_upload" class="${activePage === 'invoice_upload' ? 'active' : ''}">
                              <i class="fas fa-upload me-2" style="font-size: 0.8rem;"></i> <span>Upload</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/list_invoice" class="${activePage === 'list_invoice' ? 'active' : ''}">
-                             <i class="fas fa-list me-2" style="font-size: 0.8rem;"></i> <span>List</span>
                         </a>
                     </li>
                     <li>

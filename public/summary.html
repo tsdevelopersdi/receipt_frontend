@@ -343,6 +343,12 @@
                             <option value="rejected">Rejected</option>
                         </select>
                     </div>
+                    <div class="col-12 col-md-3 col-xl-2">
+                        <label class="form-label">Project</label>
+                        <select id="filter-project" class="form-select">
+                            <option value="">All Projects</option>
+                        </select>
+                    </div>
                     <!-- <div class="col-6 col-md-3 col-xl-2">
                         <label class="form-label">Literal Dept</label>
                         <input type="text" id="filter-dept" class="form-control" placeholder="e.g. IT, Sales">
@@ -478,7 +484,8 @@
             dateTo: '',
             flow: '',
             status: '',
-            dept: ''
+            dept: '',
+            project: ''
         };
 
         let trendChart = null;
@@ -496,6 +503,7 @@
         // ─────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', function () {
             renderLayout('summary');
+            loadProjectFilterOptions();
             initTable();
             bindFilterControls();
 
@@ -573,6 +581,37 @@
                 }
 
             } catch (e) { console.error('Analytics error', e); }
+        }
+
+        async function loadProjectFilterOptions() {
+            const selectEl = document.getElementById('filter-project');
+            if (!selectEl) return;
+            try {
+                const res = await apiFetch(API_CONFIG.endpoints.projects);
+                if (!res.ok) return;
+                const projects = await res.json();
+                if (!Array.isArray(projects)) return;
+
+                const options = projects
+                    .map(p => p?.project_name)
+                    .filter(Boolean)
+                    .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+                const uniqueOptions = [...new Set(options)];
+                selectEl.innerHTML = '<option value="">All Projects</option>' +
+                    uniqueOptions.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+            } catch (error) {
+                console.error('Failed to load projects filter:', error);
+            }
+        }
+
+        function escapeHtml(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         function getDiffDays(from, to) {
@@ -706,6 +745,7 @@
             activeFilters.dateTo = document.getElementById('filter-date-to').value;
             activeFilters.flow = document.getElementById('filter-flow').value;
             activeFilters.status = document.getElementById('filter-status').value;
+            activeFilters.project = document.getElementById('filter-project').value;
             activeFilters.dept = document.getElementById('filter-dept')?.value?.trim() || '';
             renderChips();
             $('#summary-table').DataTable().ajax.reload();
@@ -718,8 +758,9 @@
             document.getElementById('filter-preset').value = '';
             document.getElementById('filter-flow').value = '';
             document.getElementById('filter-status').value = '';
+            document.getElementById('filter-project').value = '';
             if (document.getElementById('filter-dept')) document.getElementById('filter-dept').value = '';
-            activeFilters = { dateFrom: '', dateTo: '', flow: '', status: '', dept: '' };
+            activeFilters = { dateFrom: '', dateTo: '', flow: '', status: '', dept: '', project: '' };
             renderChips();
             $('#summary-table').DataTable().ajax.reload();
             fetchAnalytics();
@@ -732,12 +773,13 @@
             if (activeFilters.dateTo) chips.push({ key: 'dateTo', label: `To: ${activeFilters.dateTo}` });
             if (activeFilters.flow) chips.push({ key: 'flow', label: `Dept: ${activeFilters.flow}` });
             if (activeFilters.status) chips.push({ key: 'status', label: `Status: ${activeFilters.status}` });
+            if (activeFilters.project) chips.push({ key: 'project', label: `Project: ${activeFilters.project}` });
             container.innerHTML = chips.map(c => `<div class="filter-chip">${c.label}<span class="remove-chip" onclick="removeChip('${c.key}')">×</span></div>`).join('');
         }
 
         function removeChip(key) {
             activeFilters[key] = '';
-            const map = { dateFrom: 'filter-date-from', dateTo: 'filter-date-to', flow: 'filter-flow', status: 'filter-status', dept: 'filter-dept' };
+            const map = { dateFrom: 'filter-date-from', dateTo: 'filter-date-to', flow: 'filter-flow', status: 'filter-status', dept: 'filter-dept', project: 'filter-project' };
             if (map[key]) document.getElementById(map[key]).value = '';
             renderChips();
             $('#summary-table').DataTable().ajax.reload();
@@ -751,6 +793,7 @@
             if (activeFilters.flow) url.searchParams.set('flow', activeFilters.flow);
             if (activeFilters.status) url.searchParams.set('status', activeFilters.status);
             if (activeFilters.dept) url.searchParams.set('dept', activeFilters.dept);
+            if (activeFilters.project) url.searchParams.set('project', activeFilters.project);
             Object.entries(extra).forEach(([k, v]) => { if (v !== undefined) url.searchParams.set(k, v); });
             return url;
         }

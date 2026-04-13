@@ -78,6 +78,10 @@
             right: 30px;
             z-index: 1000;
         }
+
+        .project-select {
+            min-width: 170px;
+        }
     </style>
 </head>
 
@@ -177,6 +181,7 @@
                                         <tr>
                                             <th>Tanggal</th>
                                             <th>Description</th>
+                                            <th style="width: 200px;">Project</th>
                                             <th class="text-center" style="width: 80px;">Qty</th>
                                             <th class="text-end" style="width: 140px;">Price (IDR)</th>
                                             <th class="text-end" style="width: 140px;">Total</th>
@@ -229,7 +234,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr class="table-light">
-                                            <td colspan="4" class="text-end fw-bold fs-5 py-3">Grand Total</td>
+                                            <td colspan="5" class="text-end fw-bold fs-5 py-3">Grand Total</td>
                                             <td class="text-end fw-bold fs-5 text-primary py-3"
                                                 id="detail-total-amount">Rp 32.500.000</td>
                                         </tr>
@@ -300,6 +305,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const invoiceId = urlParams.get('id');
             let currentInvoiceStatus = null; // Track invoice status for locking
+            let availableProjects = [];
 
             // Format number to IDR
             const formatCurrency = (amount) => {
@@ -334,7 +340,8 @@
                 const today = new Date().toISOString().split('T')[0];
                 tr.innerHTML = `
                     <td><div class="editable-cell tanggal-input" contenteditable="true">${today}</div></td>
-                    <td><div class="editable-cell" contenteditable="true">New Item...</div></td>
+                    <td><div class="editable-cell merchant-input" contenteditable="true">New Item...</div></td>
+                    <td>${buildProjectSelectHtml('', false)}</td>
                     <td class="text-center"><div class="editable-cell qty-input" contenteditable="true">1</div></td>
                     <td class="text-end"><div class="editable-cell price-input" contenteditable="true">0</div></td>
                     <td class="text-end fw-bold row-total">Rp 0</td>
@@ -349,6 +356,46 @@
                 row.remove();
                 calculateTotals();
             };
+
+            async function loadProjectOptions() {
+                try {
+                    const response = await apiFetch(API_CONFIG.endpoints.projects, {
+                        credentials: 'include'
+                    });
+                    if (!response.ok) throw new Error('Failed to load projects');
+                    const projects = await response.json();
+                    availableProjects = Array.isArray(projects) ? projects : [];
+                } catch (error) {
+                    console.error('Failed to load project options:', error);
+                    availableProjects = [];
+                }
+            }
+
+            function escapeHtml(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function buildProjectSelectHtml(selectedProject, isReadOnly) {
+                const selected = String(selectedProject || '');
+                const options = ['<option value="">-- Optional --</option>'];
+
+                availableProjects.forEach(project => {
+                    const name = project.project_name || '';
+                    const selectedAttr = name === selected ? 'selected' : '';
+                    options.push(`<option value="${escapeHtml(name)}" ${selectedAttr}>${escapeHtml(name)}</option>`);
+                });
+
+                return `
+                    <select class="form-select form-select-sm project-select" ${isReadOnly ? 'disabled' : ''}>
+                        ${options.join('')}
+                    </select>
+                `;
+            }
 
             // Fetch Invoice Details
             async function fetchInvoiceData(id) {
@@ -405,22 +452,28 @@
                     // --- Admin-only UI Enhancements ---
                     const userRole = Auth.getUserRole();
                     const isAdmin = userRole === 'admin' || userRole === 'super admin';
-                    const isLockedStatus = data.status === 'closed' || data.status === 'rejected' || data.status === 'completed';
+                    const isTerminalStatus = data.status === 'closed' || data.status === 'rejected';
+                    const isCompletedStatus = data.status === 'completed';
 
-                    if (isAdmin && !isLockedStatus) {
+                    if (isAdmin && !isTerminalStatus && !isCompletedStatus) {
                         document.getElementById('add-item-btn').classList.remove('d-none');
                         document.querySelectorAll('.action-col').forEach(el => el.classList.remove('d-none'));
                     }
 
-                    // Special case: hide everything if closed, rejected, or completed
-                    if (isLockedStatus) {
-                        const buttons = ['reject-btn', 'forward-btn', 'update-btn', 'approve-btn', 'close-btn', 'add-item-btn'];
-                        buttons.forEach(id => document.getElementById(id)?.classList.add('d-none'));
-
-                        // Disable table editing
+                    // Disable editing for ANY final/approved status
+                    if (isTerminalStatus || isCompletedStatus) {
                         document.querySelectorAll('.editable-cell').forEach(cell => {
                             cell.setAttribute('contenteditable', 'false');
                         });
+                        // Also hide the Add Item button for these statuses
+                        document.getElementById('add-item-btn')?.classList.add('d-none');
+                        document.getElementById('update-btn')?.classList.add('d-none');
+                    }
+
+                    // Only hide the Close button if the status is strictly terminal (Closed/Rejected)
+                    if (isTerminalStatus) {
+                        const buttons = ['reject-btn', 'forward-btn', 'approve-btn', 'close-btn'];
+                        buttons.forEach(id => document.getElementById(id)?.classList.add('d-none'));
                     }
 
                     // Fetch Image using nama_invoice filename
@@ -440,7 +493,8 @@
                             const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td><div class="${isReadOnly ? '' : 'editable-cell'} tanggal-input" contenteditable="${!isReadOnly}">${item.tanggal ? new Date(item.tanggal).toISOString().split('T')[0] : ''}</div></td>
-                                <td><div class="${isReadOnly ? '' : 'editable-cell'}" contenteditable="${!isReadOnly}">${item.merchant || ''}</div></td>
+                                <td><div class="${isReadOnly ? '' : 'editable-cell'} merchant-input" contenteditable="${!isReadOnly}">${item.merchant || ''}</div></td>
+                                <td>${buildProjectSelectHtml(item.project || '', isReadOnly)}</td>
                                 <td class="text-center"><div class="${isReadOnly ? '' : 'editable-cell'} qty-input" contenteditable="${!isReadOnly}">1</div></td>
                                 <td class="text-end"><div class="${isReadOnly ? '' : 'editable-cell'} price-input" contenteditable="${!isReadOnly}">${item.jumlah || 0}</div></td>
                                 <td class="text-end fw-bold row-total">${formatCurrency(item.jumlah)}</td>
@@ -504,9 +558,10 @@
                 try {
                     const rows = document.querySelectorAll('#invoice-items-body tr');
                     const updatedTransactions = Array.from(rows).map(row => ({
-                        tanggal: row.cells[0].innerText.trim() || null,
-                        merchant: row.cells[1].innerText.trim(),
-                        jumlah: parseFloat(row.cells[3].innerText) || 0
+                        tanggal: row.querySelector('.tanggal-input')?.innerText.trim() || null,
+                        merchant: row.querySelector('.merchant-input')?.innerText.trim() || '',
+                        project: row.querySelector('.project-select')?.value || '',
+                        jumlah: parseFloat(row.querySelector('.price-input')?.innerText || 0) || 0
                         // Note: If you have more fields like category, they should be added here
                     }));
 
@@ -680,7 +735,10 @@
 
             // Initial Load
             if (invoiceId) {
-                fetchInvoiceData(invoiceId);
+                (async () => {
+                    await loadProjectOptions();
+                    await fetchInvoiceData(invoiceId);
+                })();
             } else {
                 showToast('No Invoice ID provided', 'warning');
             }
